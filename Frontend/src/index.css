@@ -1,0 +1,132 @@
+@import "tailwindcss";
+
+:root {
+  /* Brand Colors */
+  --primary: #0052cc;        /* Main Blue (Navbar) */
+  --primary-dark: #0747a6;   /* Hover Blue */
+  --primary-light: #fffafa;  /* Light Blue Background */
+
+  --second: #f4f5f7e2;      /* Slate Gray */
+  --secondary-dark: #feffff;
+
+  --accent: #93ddff;         /* Sky Blue Accent */
+
+  --success: #16a34a;
+  --danger: #dc2626;
+  --warning: #f59e0b;
+
+  --bg: #f8fafc;             /* Page Background */
+  --card-bg: #ffffff;
+}
+/* Backgrounds */
+.bg-primary { background-color: var(--primary); }
+.bg-primary-dark { background-color: var(--primary-dark); }
+.bg-primary-light { background-color: var(--primary-light); }
+
+.bg-secondary { background-color: var(--second); }
+.bg-accent { background-color: var(--accent); }
+
+.bg-success { background-color: var(--success); }
+.bg-danger { background-color: var(--danger); }
+
+/* Text */
+.text-primary { color: var(--primary); }
+.text-secondary { color: var(--secondary); }
+.text-danger { color: var(--danger); }
+
+/* Hover */
+.hover-primary:hover {
+  background-color: var(--primary-dark);
+  transition: 0.2s ease;
+}
+
+.hover-secondary:hover {
+  background-color: var(--secondary-dark);
+  transition: 0.2s ease;
+}
+.hover-accent:hover{
+  background-color: #fefeff;
+  transition: 0.2s ease;
+}
+.btn-primary {
+  background-color: var(--primary);
+  color: white;
+  padding: 8px 50px;
+  border-radius: 6px;
+  font-weight: 500;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-dark);
+  transition: 0.2s ease;
+}
+.btn-outline-danger {
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  background-color: transparent;
+  padding: 8px 20px;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-outline-danger:hover {
+  background-color: rgba(220, 38, 38, 0.08);
+  transition: 0.2s ease; 
+}
+
+/* Card */
+.card {
+  background-color: var(--card-bg);
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+
+.block{
+    text-decoration: none;
+    color: rgb(12, 12, 12);
+    margin-top: 20px;
+    font-size: larger;
+}
+/* .sidebar{
+    background-color: white;
+} */
+/* th{
+    background-color: rgb(180, 180, 250);
+    
+    
+} */
+th,td{
+    padding: 10px;
+    
+}
+td{
+    margin-left: auto;
+}
+tbody tr:hover{
+   background-color: rgb(232, 247, 251);
+}
+
+
+.text-white, .bg-red-400{
+    border-radius: 8px;
+}
+.showdata{
+    padding:5px 20px;
+}
+.badge-active { 
+    background: #adfcc6; 
+    color: #22543d; 
+    padding: 3px 15px;
+    border-radius: 10px;
+}
+.badge-inactive { 
+    background: #fab3b3; 
+    color: #822727;
+    padding: 3px 15px;
+    border-radius: 10px;
+ }
