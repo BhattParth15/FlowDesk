@@ -6,10 +6,21 @@ const generatePassword = require("../utils/generate_Password.js");
 
 require("dotenv").config();
 
-
 const Login = async (req, res) => {
   try {
     const { email, password } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    if (!password) {
+      return res.status(400).json({ message: "Password is required" });
+    }
+
+    if (email.length > 100) {
+      return res.status(400).json({ message: "Email must be under 100 characters" });
+    }
 
     const user = await User.findOne({ email }).populate({ path: "role", populate: { path: "permissions" } });
     if (!user) {
@@ -22,12 +33,17 @@ const Login = async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user._id, role: user.role?._id, isSuperAdmin: user.isSuperAdmin },
+      { id: user._id, role: user.role?._id,companyId: user.companyId, isSuperAdmin: user.isSuperAdmin },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
 
-    res.cookie("token", token, { httpOnly: true });
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: true,       // REQUIRED (DevTunnel = HTTPS)
+      sameSite: "none",   // REQUIRED for cross-origin
+      path: "/",          // good practice
+    });
 
     res.json({
       token,
@@ -89,15 +105,21 @@ const logout = (req, res) => {
 
 //Show Login Data
 const getMe = async (req, res) => {
+  if (!req.user || !req.user.id) {
+      return res.status(200).json({
+        id: null,
+        permissions: []
+      });
+    }
   const user = await User.findById(req.user.id).populate("role", "name permissions");
   res.json({
     id: user._id,
     name: user.name,
     email: user.email,
-    status:user.status,
+    status: user.status,
     isSuperAdmin: user.isSuperAdmin,
-    role: user.role || null,
-    permissions: user.isSuperAdmin? ["ALL"] : user.role?.permissions || []
+    role: user.role?.name || user.role || null,
+    permissions: user.isSuperAdmin ? ["ALL"] : user.role?.permissions || []
   });
 };
 

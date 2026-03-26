@@ -6,6 +6,14 @@ const StaffRoutes=require("./routes/staffRoutes.js");
 const PermissionRoutes=require("./routes/permissionRoutes.js");
 const RoleRoutes=require("./routes/roleRoutes.js");
 const TaskStatusRouter=require("./routes/taskStatusRoutes.js");
+const ProjectRoutes=require("./routes/projectRoutes.js");
+const DocumentRoutes=require("./routes/documentRoutes.js");
+const BulkRoutes=require("./routes/bulkRoutes.js");
+const CompanyRoutes=require("./routes/companyRoutes.js");
+const DocumentPageRoutes=require("./routes/documentPageRoutes.js");
+const SubcriptionRoutes=require("./routes/subcriptionRoutes.js");
+const DashboardRoutes=require("./routes/dashboardRoutes.js");
+
 const http =require("http");
 const { Server } =require( "socket.io");
 const multer = require("multer");
@@ -20,7 +28,8 @@ const app=express();
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: "https://gw0hj15b-5173.inc1.devtunnels.ms",
+  //origin: "http://localhost:5173",
   credentials: true
 }));
 
@@ -40,7 +49,8 @@ const server = http.createServer(app);
 // Socket.IO server
 const io = new Server(server, {
     cors: {
-        origin: "http://localhost:5173", 
+        origin:"https://gw0hj15b-5173.inc1.devtunnels.ms",
+        //origin: "http://localhost:5173", 
         methods: ["GET", "POST", "PUT", "DELETE"],
         credentials: true
     }
@@ -60,27 +70,19 @@ io.on("connection", (socket) => {
 
 //Valid Login
 app.use("/auth",LoginRoutes);
+app.use("/document",DocumentRoutes);
 app.use("/task",TaskRoutes);
 app.use("/staff", StaffRoutes);
 app.use("/role", RoleRoutes);
 app.use("/permission", PermissionRoutes);
 app.use("/taskstatus",TaskStatusRouter);
+app.use("/project",ProjectRoutes);
+app.use("/bulk",BulkRoutes);
+app.use("/company",CompanyRoutes);
+app.use("/document",DocumentPageRoutes);
+app.use("/subcription",SubcriptionRoutes);
+app.use("/dashboard",DashboardRoutes);
 
-
-// Global Error Handler
-app.use((err, req, res, next) => {
-    if (err instanceof multer.MulterError) {
-        if (err.code === "LIMIT_FILE_SIZE") {
-            return res.status(400).json({ 
-                message: "Video or Image size Max 10MB" 
-            });
-        }
-        return res.status(400).json({ message: err.message });
-    } else if (err) {
-        return res.status(500).json({ message: err.message || "Internal Server Error" });
-    }
-    next();
-});
 
 
 server.listen(process.env.PORT ,()=>{

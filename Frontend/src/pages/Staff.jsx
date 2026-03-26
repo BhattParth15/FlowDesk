@@ -8,6 +8,9 @@ import Pagination from "../components/Pagination";
 import { useNavigate } from "react-router-dom";
 import { usePermission } from "../context/PermissionContext";
 import socket from "../components/Socket";
+import { useConfirmModal } from "../context/DeleteConfirmContext";
+import { useCompany } from "../context/companyContext";
+const API_URL = import.meta.env.VITE_API_URL;
 
 function Staff() {
     const [staff, setStaff] = useState([]);
@@ -17,9 +20,11 @@ function Staff() {
     const [limit, setLimit] = useState(5);
     const [totalpage, setTotalPage] = useState(1);
     const [confirmId, setConfirmId] = useState(null);
-    const [search, setSearch]=useState("");
+    const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("");
     const { hasPermission } = usePermission();
+    const { showConfirm } = useConfirmModal();
+    const { selectedCompany } = useCompany();
 
     const navigate = useNavigate();
     useEffect(() => {
@@ -27,10 +32,9 @@ function Staff() {
             fetchStaff();
         }
         if (hasPermission("role.read")) {
-
             fetchRoles();
         }
-    }, [page, limit,search,statusFilter, hasPermission]);
+    }, [page, limit, search, statusFilter, selectedCompany, hasPermission]);
 
 
     useEffect(() => {
@@ -61,9 +65,14 @@ function Staff() {
 
     const fetchRoles = async () => {
         try {
-            const res = await axios.get("http://localhost:9824/role?page=1&limit=1000", { withCredentials: true });
+            if (!selectedCompany) return;
+            let url = `${API_URL}/role?page=1&limit=1000`;
 
-            setRoles(res.data.role);
+            if (selectedCompany && selectedCompany._id !== "all") {
+                url += `&companyId=${selectedCompany._id}`;
+            }
+            const res = await axios.get(url, { withCredentials: true });
+            setRoles(res.data.roles);
         } catch (err) {
             console.log("Error:", err.res?.data || err.message);
         }
@@ -73,11 +82,11 @@ function Staff() {
         try {
             const token = localStorage.getItem("token");
 
-            const res = await axios.get(`http://localhost:9824/staff?page=${page}&limit=${limit}&search=${search}&status=${statusFilter}`, {
-                withCredentials: true //Because we used cookie 
-            });
-
-            console.log("Response:", res.data);
+            let url = `${API_URL}/staff?page=${page}&limit=${limit}&search=${search}&status=${statusFilter}`;
+            if (selectedCompany && selectedCompany._id !== "all") {
+                url += `&companyId=${selectedCompany._id}`;
+            }
+            const res = await axios.get(url, { withCredentials: true });
             setStaff(res.data.staff || res.data);
             setTotalPage(res.data.totalPages);
             setPage(res.data.currentPage)
@@ -85,46 +94,58 @@ function Staff() {
             console.log("Error:", err.response?.data || err.message);
         }
     }
-    const deleteStaff= async(id)=>{
-        try{
-            await axios.delete(`http://localhost:9824/staff/${id}`,{withCredentials:true});
-            fetchStaff();
-            setConfirmId(null);
-        }catch(error){
+    const deleteStaff = async (id) => {
+        try {
+            await axios.delete(`${API_URL}/staff/${id}`, { withCredentials: true });
+            // fetchStaff();
+            // setConfirmId(null);
+        } catch (error) {
             console.log(error || "Delete Staff Give Error ");
         }
     }
-    const column=[
+    const column = [
         {
             header: "#",
+            align: "left",
+            width: "w-[40px]",
             render: (item, index) => (page - 1) * limit + index + 1
         },
         {
             header: "NAME",
+            align: "left",
+            width: "w-[180px]",
             accessor: "name"
         },
         {
-            header:"EMAIL",
-            accessor:"email"
+            header: "EMAIL",
+            align: "left",
+            width: "w-[260px]",
+            accessor: "email"
         },
         {
-            header:"PHONE",
-            accessor:"phone"
+            header: "PHONE",
+            align: "left",
+            accessor: "phone"
         },
         {
             header: "ROLE",
+            align: "left",
             render: (item) => (
-                <code 
-                    className="value-code" 
-                    onClick={() => navigate(`/role/edit/${item.role?._id}`)}>{item.role?.name}</code> 
+                <code
+                    className="value-code text-black"
+                    onClick={() => navigate(`/role/edit/${item.role?._id}`)}>{item.role?.name}</code>
             )
         },
         {
             header: "STATUS",
+            align: "center",
+            width: "w-[100px]",
             render: (item) => (
-                <span className={item.status === "Active" ? "badge-active" : "badge-inactive"}>
-                    {item.status}
-                </span>
+                <div className="flex justify-center">
+                    <span className={item.status === "Active" ? "badge-active" : "badge-inactive"}>
+                        {item.status}
+                    </span>
+                </div>
             )
         }
     ]
@@ -136,9 +157,9 @@ function Staff() {
                 createPermission="staff.create"
             />
             <div className="table-card">
-                <Showdata 
-                    limit={limit} 
-                    setLimit={(newLimit) =>{setLimit(newLimit);setPage(1);}}
+                <Showdata
+                    limit={limit}
+                    setLimit={(newLimit) => { setLimit(newLimit); setPage(1); }}
                     search={search}
                     setSearch={setSearch}
                     setPage={setPage}
@@ -150,47 +171,21 @@ function Staff() {
                     columns={column}
                     data={staff}
                     onEdit={(item) => navigate(`/staff/edit/${item._id}`, { state: item })}
-                    onDelete={setConfirmId}
+                    onDelete={(item) =>
+                        showConfirm({
+                            id: item._id,
+                            name: item.name,
+                            onConfirm: () => deleteStaff(item._id),
+                        })
+                    }
                     actions
                     editPermission="staff.update"
                     deletePermission="staff.delete"
                 />
                 <Pagination page={page} totalPages={totalpage} setPages={setPage} />
             </div>
-            {/* Confirmation Modal */}
-            {confirmId && (() => {
-                const DeleteData = staff.find(t => t._id === confirmId);
-                return (
-                    <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center">
-                        <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-2xl flex justify-between items-center border border-gray-200">
 
-                            {/* Message: whitespace-nowrap keeps it on one line */}
-                            <span className="text-gray-900 font-medium text-lg ">
-                                {`Are you sure you want to delete staff name?-${DeleteData?.name}`}
-                            </span>
-
-                            {/* Buttons */}
-                            <div className="flex gap-4 ml-8">
-                                <button
-                                    className="bg-red-500 text-white px-6 py-2 rounded hover:bg-red-600 transition"
-                                    onClick={() => deleteStaff(confirmId)}
-                                >
-                                    Yes
-                                </button>
-                                <button
-                                    className="bg-gray-200 text-gray-800 px-6 py-2 rounded hover:bg-gray-300 transition"
-                                    onClick={() => setConfirmId(null)}
-                                >
-                                    No
-                                </button>
-                            </div>
-
-                        </div>
-                    </div>
-                )
-            })()
-            }
-        </div>  
+        </div>
     )
 };
 

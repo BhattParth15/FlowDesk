@@ -1,5 +1,6 @@
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import ReuseForm from "../components/reuseForm.jsx";
+const API_URL = import.meta.env.VITE_API_URL;
 
 function PermissionForm() {
     const navigate = useNavigate();
@@ -16,10 +17,11 @@ function PermissionForm() {
             <ReuseForm
                 title={id ? "Edit Permission" : "Create Permission"}
                 method={id ? "put" : "post"}
-                apiUrl={id ? `http://localhost:9824/permission/${id}` : "http://localhost:9824/permission"}
+                apiUrl={id ? `${API_URL}/permission/${id}` : `${API_URL}/permission`}
                 fields={[
                     { 
-                        name: "name", 
+                        name: "name",
+                        required: true, 
                         fieldType: "input", 
                         type: "text", 
                         placeholder: "e.g. User Management" 
@@ -35,6 +37,7 @@ function PermissionForm() {
                     {
                         name: "status",
                         fieldType: "select",
+                        required: true,
                         options: [
                             { label: "Active", value: "Active" },
                             { label: "Inactive", value: "Inactive" },

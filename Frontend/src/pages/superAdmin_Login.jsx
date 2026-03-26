@@ -1,11 +1,22 @@
 import axios from "axios";
-import { useState } from "react"
+import { useState, useEffect } from "react";
+import { AuthContext } from "../context/AuthContext.jsx";
+import { useContext } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 function SuperAdminLogin() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [message, setMessage] = useState("");
     const [messageType, setMessageType] = useState(""); // "error" or "success"
+    const [showPassword, setShowPassword] = useState(false);
+    const { login, user } = useContext(AuthContext);
+    const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+
+    const redirect = searchParams.get("redirect") || "/dashboard";
 
     const showMessage = (msg, type = "error") => {
         setMessage(msg);
@@ -14,35 +25,50 @@ function SuperAdminLogin() {
         setTimeout(() => setMessage(""), 2000);
     };
 
+    //  // If user is already logged in and a redirect query exists, go directly
+    // useEffect(() => {
+    //     if (user && redirect) {
+    //         navigate(redirect, { replace: true });
+    //     }
+    // }, [user, redirect, navigate]);
+
+
     const adminLogin = async () => {
-        if (!email || !password) {
-            showMessage("Email and Password are required")
+        if (!email.trim()) {
+            showMessage("Email is required");
+            return;
+        }
+        if (!password.trim()) {
+            showMessage("Password is required");
+            return;
+        }
+        if (email.length > 50) {
+            showMessage("Email must be under 50 characters");
+            return;
+        }
+        if (password.length < 8) {
+            showMessage("Password must be 8 characters");
+            return;
+        }
+        if (password.length > 20) {
+            showMessage("Password must be under 20 characters");
             return;
         }
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
         if (!emailRegex.test(email)) {
             showMessage("Please enter a valid email address");
             return;
         }
 
         try {
-            const res = await axios.post("http://localhost:9824/auth/login", { email, password }, {
+            const res = await axios.post(`${API_URL}/auth/login`, { email, password }, {
                 withCredentials: true
             });
-
-            //localStorage.setItem("token", res.data.token);
-            localStorage.setItem("name", res.data.name);
-            localStorage.setItem("email", res.data.email);
-            localStorage.setItem("token", res.data.token);
-            localStorage.setItem("isSuperAdmin", res.data.isSuperAdmin);
-            localStorage.setItem("permissions", JSON.stringify(res.data.role.permissions));
-            //console.log("Login Response:", res.data);
-            
-            showMessage("Login Successful...","success");
+            login(res.data);
+            showMessage("Login Successful...", "success");
             setTimeout(() => {
-                window.location.href = "/dashboard";
-            }, 1000);
+                window.location.href = redirect;
+            }, 2000);
         }
         catch (error) {
             console.log(error)
@@ -56,7 +82,7 @@ function SuperAdminLogin() {
             {message && (
                 <div
                     className={`fixed top-10 left-1/2 transform -translate-x-1/2 px-20 py-3 rounded shadow-lg text-white z-50 
-                        ${messageType === "error" ? "bg-red-400" : "bg-green-300"
+                        ${messageType === "error" ? "bg-red-400" : "bg-green-400"
                         }`}
                 >
                     {message}
@@ -78,12 +104,24 @@ function SuperAdminLogin() {
                     <br></br>
                     <br></br>
                     <label>Password</label>
-                    <input
-                        type="password"
-                        placeholder="Enter Your Password"
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
+                    <div className="relative">
+                        <input
+                            type={showPassword ? "text" : "password"}
+                            placeholder="Enter Your Password"
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="w-full px-4 py-2 pr-12 border border-gray-300 rounded-lg 
+                                        focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute inset-y-0 right-3 flex items-center pr-4 text-gray-500 hover:text-gray-700"
+                        >
+                            {showPassword ? "🔒" : "👁"}
+                        </button>
+
+                    </div>
                     <br></br>
                     <br></br>
                     <button
@@ -92,7 +130,14 @@ function SuperAdminLogin() {
                     >
                         Login
                     </button>
-
+                    <p className="text-center mt-4 text-sm text-gray-600">
+                        <span
+                            onClick={() => navigate("/company-register")}
+                            className="text-blue-600 cursor-pointer hover:underline"
+                        >
+                            Register Company
+                        </span>
+                    </p>
                 </div>
             </div>
         </div>

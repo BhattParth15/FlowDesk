@@ -8,6 +8,9 @@ import CommonTable from "../components/CommonTable.jsx";
 import Pagination from "../components/Pagination.jsx";
 import { usePermission } from "../context/PermissionContext.jsx";
 import socket from "../components/Socket.jsx";
+import { useConfirmModal } from "../context/DeleteConfirmContext.jsx";
+import { useCompany } from "../context/companyContext.jsx";
+const API_URL = import.meta.env.VITE_API_URL;
 
 function Permission() {
     const [permission, setPermission] = useState([]);
@@ -16,15 +19,17 @@ function Permission() {
     const [totalpage, setTotalPage] = useState(1);
     const [confirmId, setConfirmId] = useState(null);
     const [search, setSearch] = useState("");
-    const [statusFilter, setStatusFilter]=useState("");
+    const [statusFilter, setStatusFilter] = useState("");
     const navigate = useNavigate();
-    const {hasPermission}=usePermission();
+    const { hasPermission } = usePermission();
+    const { showConfirm } = useConfirmModal();
+    const { selectedCompany } = useCompany();
 
     useEffect(() => {
-        if(hasPermission("permission.read")){
+        if (hasPermission("permission.read")) {
             fetchPermission();
         }
-    }, [page, limit,search,statusFilter, hasPermission]);
+    }, [page, limit, search, statusFilter,selectedCompany,hasPermission]);
 
 
     useEffect(() => {
@@ -55,7 +60,12 @@ function Permission() {
 
     const fetchPermission = async () => {
         try {
-            const res = await axios.get(`http://localhost:9824/permission?page=${page}&limit=${limit}&search=${search}&status=${statusFilter}`, { withCredentials: true });
+            //const res = await axios.get(`${API_URL}/permission?page=${page}&limit=${limit}&search=${search}&status=${statusFilter}`, { withCredentials: true });
+            let url = `${API_URL}/permission?page=${page}&limit=${limit}&search=${search}&status=${statusFilter}`;
+            if (selectedCompany && selectedCompany._id !== "all") {
+                url += `&companyId=${selectedCompany._id}`;
+            }
+            const res = await axios.get(url, { withCredentials: true });
             setPermission(res.data.permissions);
             setTotalPage(res.data.totalPages);
             setPage(res.data.currentPage);
@@ -66,103 +76,82 @@ function Permission() {
 
     const Delete = async (id) => {
         try {
-            await axios.delete(`http://localhost:9824/permission/${id}`, { withCredentials: true });
-            fetchPermission();
-            setConfirmId(null);
+            await axios.delete(`${API_URL}/permission/${id}`, { withCredentials: true });
+            //fetchPermission();
+
         } catch (err) {
             console.log(err.message);
         }
     };
 
     const column = [
-        { header: 
-            "#", 
-            render: (item, index) => (page - 1) * limit + index + 1 
+        {
+            header: "#",
+            align: "center",
+            width: "w-[40px]",
+            render: (item, index) => (page - 1) * limit + index + 1
         },
-        { 
-            header: "NAME", 
-            accessor: "name" 
+        {
+            header: "NAME",
+            align:"left",
+            width: "w-[250px]",
+            accessor: "name"
         },
-        { 
-        header: "VALUE", 
-        render: (item) => (
-            <code className="value-code">{item.value}</code> // Styled as code
-        )
-        },
-        { 
-            header: "STATUS", 
+        {
+            header: "VALUE",
+            align:"left",
             render: (item) => (
-                <span className={item.status === "Active" ? "badge-active" : "badge-inactive"}>
-                    {item.status}
-                </span>
+                <code className="value-code">{item.value}</code> // Styled as code
+            )
+        },
+        {
+            header: "STATUS",
+            align: "center",
+            width: "w-[100px]",
+            render: (item) => (
+                <div className="flex justify-center">
+                    <span className={item.status === "Active" ? "badge-active" : "badge-inactive"}>
+                        {item.status}
+                    </span>
+                </div>
             )
         }
     ];
-
-    
-
     return (
         <div className="p-6">
-            <PageHeader 
-                title="Permissions" 
+            <PageHeader
+                title="Permissions"
                 onCreate={() => navigate("/permission/create")}
-                createPermission="permission.create" 
+                createPermission="permission.create"
             />
             <div className="table-card">
-                <Showdata 
-                    limit={limit} 
-                    setLimit={(newLimit) =>{setLimit(newLimit);setPage(1);}}
+                <Showdata
+                    limit={limit}
+                    setLimit={(newLimit) => { setLimit(newLimit); setPage(1); }}
                     search={search}
                     setSearch={setSearch}
                     setPage={setPage}
                     statusFilter={statusFilter}
                     setStatusFilter={setStatusFilter}
-                    statusOptions={["Active","Inactive","Deleted"]} 
+                    statusOptions={["Active", "Inactive", "Deleted"]}
                 />
-                <CommonTable 
-                    columns={column} 
-                    data={permission} 
-                    onEdit={(item) => navigate(`/permission/edit/${item._id}`, { state: item })} 
-                    onDelete={setConfirmId} 
+                <CommonTable
+                    columns={column}
+                    data={permission}
+                    onEdit={(item) => navigate(`/permission/edit/${item._id}`, { state: item })}
+                    onDelete={(item) =>
+                        showConfirm({
+                            id: item._id,
+                            name: item.name,
+                            onConfirm: () => Delete(item._id),
+                        })
+                    }
                     actions
                     editPermission="permission.update"
                     deletePermission="permission.delete"
                 />
                 <Pagination page={page} totalPages={totalpage} setPages={setPage} />
             </div>
-            {/* Confirmation Modal */}
-            {confirmId && (() => {
-                const DeleteData = permission.find(t => t._id === confirmId);
-                return (
-                    <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center">
-                        <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-3xl flex justify-between items-center border border-gray-200">
-
-                            {/* Message: whitespace-nowrap keeps it on one line */}
-                            <span className="text-gray-900 font-medium text-lg ">
-                                {`Are you sure you want to delete Permission? - ${DeleteData?.name}`}
-                            </span>
-
-                            {/* Buttons */}
-                            <div className="flex gap-4 ml-8">
-                                <button
-                                    className="bg-red-500 text-white px-6 py-2 rounded hover:bg-red-600 transition"
-                                    onClick={() => Delete(confirmId)}
-                                >
-                                    Yes
-                                </button>
-                                <button
-                                    className="bg-gray-200 text-gray-800 px-6 py-2 rounded hover:bg-gray-300 transition"
-                                    onClick={() => setConfirmId(null)}
-                                >
-                                    No
-                                </button>
-                            </div>
-
-                        </div>
-                    </div>
-                )
-            })()
-            }
         </div>
     );
 }

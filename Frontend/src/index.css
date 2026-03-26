@@ -2,16 +2,17 @@
 
 :root {
   /* Brand Colors */
-  --primary: #0052cc;        /* Main Blue (Navbar) */
-  --primary-dark: #0747a6;   /* Hover Blue */
+  --primary: #4F46E5;        /* Main Blue (Navbar) */
+  --primary-dark:#4338CA;   /* Hover Blue */
   --primary-light: #fffafa;  /* Light Blue Background */
 
   --second: #f4f5f7e2;      /* Slate Gray */
   --secondary-dark: #feffff;
 
-  --accent: #93ddff;         /* Sky Blue Accent */
+  --accent: #EEF2FF;         /* Sky Blue Accent */
 
-  --success: #16a34a;
+  --success: #30db6f;
+  --success-dark:#0e9b3d;
   --danger: #dc2626;
   --warning: #f59e0b;
 
@@ -51,15 +52,39 @@
 .btn-primary {
   background-color: var(--primary);
   color: white;
+  padding: 8px 60px;
+  border-radius: 6px;
+  font-weight: 500;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: all 0.2s ease;
+}
+@media (min-width: 640px) {
+  .btn-primary {
+    padding: 8px 60px;
+    width: auto;
+  }
+}
+.btn-primary:hover {
+  background-color: var(--primary-dark);
+  transition: 0.2s ease;
+}
+.btn-primary2 {
+  background-color: var(--success);
+  color: white;
   padding: 8px 50px;
   border-radius: 6px;
   font-weight: 500;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   transition: all 0.2s ease;
 }
-
-.btn-primary:hover {
-  background-color: var(--primary-dark);
+@media (min-width: 640px) {
+  .btn-primary2 {
+    padding: 8px 50px;
+    width: auto;
+  }
+}
+.btn-primary2:hover {
+  background-color: var(--success-dark);
   transition: 0.2s ease;
 }
 .btn-outline-danger {
@@ -101,7 +126,7 @@
     
 } */
 th,td{
-    padding: 10px;
+    padding: 15px;
     
 }
 td{
@@ -117,16 +142,44 @@ tbody tr:hover{
 }
 .showdata{
     padding:5px 20px;
+    background-color: white;
+}
+.pageheader{
+  padding:4px 20px;
+  background-color: rgb(252, 252, 252);
 }
 .badge-active { 
-    background: #adfcc6; 
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+    background: #7bffa5; 
     color: #22543d; 
-    padding: 3px 15px;
+    padding: 3px 20px;
     border-radius: 10px;
 }
 .badge-inactive { 
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
     background: #fab3b3; 
     color: #822727;
     padding: 3px 15px;
     border-radius: 10px;
  }
+ .mention {
+    color: #2563eb;
+    font-weight: 600;
+    cursor: pointer;
+    position: relative;
+    display: inline-block;
+}
+
+.popup {
+    position: absolute;
+    z-index: 9999;
+    display: block !important;
+}
+
+.mention:hover .popup {
+    display: block;
+}

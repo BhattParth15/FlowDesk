@@ -1,5 +1,8 @@
 const Role = require("../models/role_Schema.js");
 const Permission = require("../models/permission_Schema.js");
+const isSuperAdmin = require("../middleware/isSuperAdmin_Middleware.js");
+const mongoose = require("mongoose");
+
 
 // Helper function to extract only the 'true' permission IDs
 const getPermissionStrings = async (PermissionModel, permissionsArray) => {
@@ -25,18 +28,26 @@ const createRole = async (req, res) => {
   try {
     let { name, permissions, status } = req.body;
 
-    if (!name) {
-      return res.status(400).json({ message: "Name is required" });
+    if (!status) {
+      return res.status(400).json({ message: "Please select Status" });
+    }
+
+    if (!permissions || !Array.isArray(permissions) || permissions.length === 0) {
+      return res.status(400).json({
+        message: "At least one permission must be selected"
+      });
     }
     name = name.trim();
+    const processedPermissions = await getPermissionStrings(Permission, permissions);
     const existing = await Role.findOne({ name });
     if (existing) {
-      // If deleted → restore
       if (existing.status === "deleted") {
-        existing.status = "Active";
+        existing.status = status || "Active";
+        existing.name = name;
+        existing.permissions = processedPermissions;
         await existing.save();
-        req.io.emit("roleCreated", role);
-        return res.json({ message: "Role restored successfully" });
+        req.io.emit("roleCreated", existing);
+        return res.json({ type: "success", message: "Role Created successfully" });
       }
       // If already active → error
       return res.status(400).json({
@@ -44,19 +55,22 @@ const createRole = async (req, res) => {
       });
     }
 
-    // TRANSFORM: Convert complex objects into a flat array of IDs
-    const processedPermissions = await getPermissionStrings(Permission, permissions);
     const role = await Role.create({
       name,
       permissions: processedPermissions,
-      status
+      status,
+      companyId: req.user.companyId
     });
 
     req.io.emit("roleCreated", role);
 
-    res.status(201).json(role);
+    res.status(201).json({ type: "success", message: "Role Created Successfully.", role });
 
   } catch (error) {
+    if (error.name === "ValidationError") {
+      const firstError = Object.values(error.errors)[0].message;
+      return res.status(400).json({ message: firstError });
+    }
     res.status(500).json({ message: error.message });
   }
 };
@@ -65,12 +79,22 @@ const createRole = async (req, res) => {
 const getRoles = async (req, res) => {
   try {
     const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 5;
+    const limit = Number(req.query.limit) || 1000;
     const search = req.query.search || "";
     const status = req.query.status || "";
+    const isSuperAdmin = req.user.isSuperAdmin;
+    const queryCompanyId = req.query.companyId;
     const skip = (page - 1) * limit;
 
     const filter = { status: { $ne: "deleted" } };
+   
+    if (isSuperAdmin) {
+      if (queryCompanyId && queryCompanyId !== "all") {
+        filter.companyId = new mongoose.Types.ObjectId(queryCompanyId);
+      }
+    } else {
+      filter.companyId = new mongoose.Types.ObjectId(req.user.companyId);
+    }
 
     if (status !== "") {
       filter.status = status;
@@ -120,23 +144,51 @@ const getRoleById = async (req, res) => {
 // UPDATE ROLE
 const updateRole = async (req, res) => {
   try {
-    const { name, permissions, status } = req.body;
+    const roleId = req.params.id;
+    let { name, permissions, status } = req.body;
+    if (!status) {
+      return res.status(400).json({ message: "Please select Status" });
+    }
+    if (!permissions || !Array.isArray(permissions) || permissions.length === 0) {
+      return res.status(400).json({
+        message: "At least one permission must be selected"
+      });
+    }
+    // Check role exists
+    const existingRole = await Role.findById(roleId);
+    if (!existingRole) {
+      return res.status(404).json({ message: "Role not found" });
+    }
+
+    // Duplicate name check (only if changed)
+    if (name !== existingRole.name) {
+      const nameExists = await Role.findOne({ name });
+      if (nameExists) {
+        return res.status(400).json({
+          message: "Role name already exists"
+        });
+      }
+    }
 
     const processedPermissions = await getPermissionStrings(Permission, permissions);
 
     const updated = await Role.findByIdAndUpdate(
-      req.params.id,
+      roleId,
       {
         name,
         permissions: processedPermissions,
         status
       },
-      { new: true }
-    ); // Populate so frontend gets the names back;
+      { new: true, runValidators: true }
+    );
     req.io.emit("roleUpdated", updated);
-    res.json(updated);
+    res.json({ type: "success", message: "Role Updated Successfully.", updated });
 
   } catch (error) {
+    if (error.name === "ValidationError") {
+      const firstError = Object.values(error.errors)[0].message;
+      return res.status(400).json({ message: firstError });
+    }
     res.status(500).json({ message: error.message });
   }
 };
@@ -148,11 +200,43 @@ const deleteRole = async (req, res) => {
       status: "deleted"
     });
     req.io.emit("roleDeleted", role._id);
-    res.json({ message: "Role deleted (soft delete)" });
+    res.json({ type: "success", message: "Role Deleted Successfully." });
 
   } catch (error) {
+    if (error.name === "ValidationError") {
+      const firstError = Object.values(error.errors)[0].message;
+      return res.status(400).json({ message: firstError });
+    }
     res.status(500).json({ message: error.message });
   }
 };
+const updateCompanyOwnerPermissions = async (req, res) => {
+  try {
+    const { companyId } = req.params;
+    const { permissions } = req.body;
 
-module.exports = { createRole, getRoles, getRoleById, updateRole, deleteRole };
+    // Find CompanyOwner role
+    const role = await Role.findOne({
+      name: "CompanyOwner",
+      companyId
+    });
+
+    if (!role) {
+      return res.status(404).json({ message: "Role not found" });
+    }
+
+    // Update permissions
+    role.permissions = permissions;
+    await role.save();
+
+    res.json({
+      message: "Permissions updated successfully",
+      role
+    });
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+module.exports = { createRole, getRoles, getRoleById, updateRole, deleteRole, updateCompanyOwnerPermissions };

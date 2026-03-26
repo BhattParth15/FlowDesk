@@ -8,14 +8,15 @@ const createPermission = async (req, res) => {
 
     const value = name.toLowerCase().replace(/\s+/g, "_");
 
-    const existing = await Permission.findOne({ value });
+    let existing = await Permission.findOne({ value });
     if (existing) {
       // If deleted → restore
       if (existing.status === "deleted") {
-        existing.status = "Active";
+        existing.status = status || "Active";
+        existing.name = name;
         await existing.save();
-        req.io.emit("PermissionCreated", permission);
-        return res.json({ message: "Permission restored successfully" });
+        req.io.emit("PermissionCreated", existing);
+        return res.json({ type:"success",message: "Permission Created successfully" });
       }
       // If already active → error
       return res.status(400).json({
@@ -31,9 +32,14 @@ const createPermission = async (req, res) => {
 
     req.io.emit("PermissionCreated", permission);
 
-    res.status(201).json(permission);
+    res.status(201).json({type:"success",message:"Permission Created Successfully.",permission});
 
   } catch (error) {
+    if (error.name === "ValidationError") {
+      const firstError = Object.values(error.errors)[0].message;
+      return res.status(400).json({ message: firstError });
+    }
+    console.log(error);
     res.status(500).json({ message: "Permission Create Error", error });
   }
 };
@@ -47,11 +53,21 @@ const getPermissions = async (req, res) => {
     const limit = Number(req.query.limit) || 5;
     const search = req.query.search || "";
     const status = req.query.status || "";
+    const isSuperAdmin = req.user.isSuperAdmin;
+    const queryCompanyId = req.query.companyId;
     const skip = (page - 1) * limit;
 
     const filter = {
       status: { $ne: "deleted" }
     };
+
+    if (isSuperAdmin) {
+      if (queryCompanyId && queryCompanyId !== "all") {
+        filter.companyId = queryCompanyId;
+      }
+    } else {
+      filter.companyId = req.user.companyId;
+    }
 
     if (status && status !== "") {
       filter.status = status;
@@ -109,12 +125,16 @@ const updatePermission = async (req, res) => {
     const updated = await Permission.findByIdAndUpdate(
       req.params.id,
       { name, value, status },
-      { new: true }
+      { new: true ,runValidators:true}
     );
     req.io.emit("PermissionUpdated", updated);
-    res.json(updated);
+    res.json({type:"success",message:"Permission Updated Successfully.",updated});
 
   } catch (error) {
+    if (error.name === "ValidationError") {
+      const firstError = Object.values(error.errors)[0].message;
+      return res.status(400).json({ message: firstError });
+    }
     res.status(500).json({ message: error.message });
   }
 };
@@ -127,8 +147,7 @@ const deletePermission = async (req, res) => {
     });
 
     req.io.emit("PermissionDeleted", per._id);
-
-    res.json({ message: "Permission deleted (soft delete)" });
+    res.status(201).json({type:"success",message:"Permission Deleted Successfully."});
 
   } catch (error) {
     res.status(500).json({ message: error.message });

@@ -7,9 +7,10 @@ const isSuperAdmin = require("../middleware/isSuperAdmin_Middleware.js");
 const isStaffOwner = require("../middleware/staffOwner_Middleware.js");
 
 const {createPermission,getPermissions,getPermissionById,updatePermission,deletePermission} = require("../controllers/permissionController.js");
+const checkPlanLimit = require("../middleware/checkPlanLimit_Middleware.js");
 
 // Create
-router.post("/",authMiddleware,isSuperAdmin,createPermission);
+router.post("/",authMiddleware,isSuperAdmin,checkPlanLimit("permission"),createPermission);
 
 // Get All (Pagination)
 router.get("/",authMiddleware,checkPermission("permission","read"),getPermissions);

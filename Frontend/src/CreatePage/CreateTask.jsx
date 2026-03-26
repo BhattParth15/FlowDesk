@@ -3,6 +3,8 @@ import ReuseForm from "../components/reuseForm.jsx";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { usePermission } from "../context/PermissionContext.jsx";
+import { useProject } from "../context/ProjectContext.jsx";
+const API_URL = import.meta.env.VITE_API_URL;
 
 function CreateTask() {
     const [staff, setStaff] = useState([]);
@@ -11,9 +13,13 @@ function CreateTask() {
     const { state } = useLocation();
     const { id } = useParams();
     const { hasPermission } = usePermission();
+    const { selectedProject } = useProject();
+    
     
 
     useEffect(() => {
+        if (!selectedProject?._id) return;
+
         if (hasPermission("staff.read")) {
             fetchStaff();
         }
@@ -21,11 +27,12 @@ function CreateTask() {
         if (hasPermission("taskstatus.read")) {
             fetchTaskStatus(); 
         }
-    }, [hasPermission]);
+    }, [hasPermission,selectedProject]);
 
     const fetchStaff = async () => {
         try {
-            const res = await axios.get("http://localhost:9824/staff?page=1&limit=1000", { withCredentials: true });
+            //const res = await axios.get(`${API_URL}/staff?page=1&limit=1000`, { withCredentials: true });
+            const res=await axios.get(`${API_URL}/staff/project?projectId=${selectedProject._id}&page=1&limit=1000`, { withCredentials: true })
             setStaff(res.data.staff);
         } catch (err) {
             console.log(err.response?.data || err.message);
@@ -34,8 +41,8 @@ function CreateTask() {
 
     const fetchTaskStatus = async () => {
         try {
-            const res = await axios.get("http://localhost:9824/taskstatus?page=1&limit=1000",{ withCredentials: true });
-
+            //const res = await axios.get(`${API_URL}/taskstatus?page=1&limit=1000`,{ withCredentials: true });
+            const res=await axios.get(`${API_URL}/taskstatus?projectId=${selectedProject._id}&page=1&limit=1000`, { withCredentials: true })
             const Data = res.data.taskStatus || res.data;
 
             // ✅ CHANGE: Show ONLY Active status
@@ -55,10 +62,11 @@ function CreateTask() {
             <ReuseForm
                 title={id ? "Edit Task" : "Create Task"}
                 method={id ? "put" : "post"}
-                apiUrl={id ? `http://localhost:9824/task/${id}` : "http://localhost:9824/task"}
+                apiUrl={id ? `${API_URL}/task/${id}` : `${API_URL}/task`}
                 fields={[
                     {
                         name: "name",
+                        required: true,
                         label: "Task",
                         fieldType: "input",
                         type: "text",
@@ -66,8 +74,9 @@ function CreateTask() {
                     },
                     {
                         name: "description",
+                        required: true,
                         label: "Description",
-                        fieldType: "input",
+                        fieldType: "textarea",
                         type: "text",
                         placeholder: "Enter Task Description"
                     },
@@ -85,7 +94,8 @@ function CreateTask() {
                     },
                     {
                         name: "assignedTo",
-                        label: "Assign",
+                        required: true,
+                        label: "Assignee",
                         fieldType: "select",
                         options: hasPermission("staff.read")?staff.map((s) => ({
                             label: s.name,
@@ -95,6 +105,7 @@ function CreateTask() {
                     {
                         name: "taskStatus",     // must match backend schema field
                         label: "Task Status",
+                        required: true,
                         fieldType: "select",
                         options: statusList.map((status) => ({
                             label: status.name, 

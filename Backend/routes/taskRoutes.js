@@ -7,6 +7,7 @@ const isSuperAdmin = require("../middleware/isSuperAdmin_Middleware.js");
 const isStaffOwner = require("../middleware/staffOwner_Middleware.js");
 const isTaskOwner = require("../middleware/isTaskOwner_Middleware.js");
 const upload = require("../middleware/multer.js");
+const checkPlanLimitTS = require("../middleware/CheckPlanLimitTaskIssue.js");
 
 const router=express.Router();
 
@@ -14,8 +15,9 @@ router.get("/",auth,checkPermission("task","read"),taskControll.getTasks);
 
 // router.post("/",auth,role("admin"),taskControll.createTask);
 router.put("/:id",auth,checkPermission("task","update"),isTaskOwner,upload.fields([{ name: "image", maxCount: 5 },{ name: "video", maxCount: 1 }]),taskControll.updateTask);
-router.delete("/:id",auth,checkPermission("task","delete"),isTaskOwner,taskControll.deleteTask);
-router.post("/",auth,checkPermission("task","create"),upload.fields([{ name: "image", maxCount: 5 },{ name: "video", maxCount: 1 }]),  taskControll.createTask);
-router.put("/complete",auth,checkPermission("task","complete"),isTaskOwner, taskControll.completeTask)
+router.delete("/:id",auth,checkPermission("task","delete"),taskControll.deleteTask);
+router.post("/",auth,checkPermission("task","create"),upload.fields([{ name: "image", maxCount: 5 },{ name: "video", maxCount: 1 }]),checkPlanLimitTS(),  taskControll.createTask);
+router.put("/complete",auth,checkPermission("task","complete"),isTaskOwner, taskControll.completeTask);
+router.get("/project/:projectId", auth,checkPermission("task","read"),taskControll.getTasksByProject);
 
 module.exports=router;
