@@ -6,6 +6,20 @@ const generatePassword = require("../utils/generate_Password.js");
 
 require("dotenv").config();
 
+const getRedirectPath = (user) => {
+  if (user.isSuperAdmin) {
+    return "/dashboard";
+  }
+
+  if (user.role?.name === "CompanyOwner") {
+    return "/company-profile";
+  }
+
+  const hasDashboardModule = user.companyId?.subscription?.modules?.some(
+    (m) => m.name === "dashboard"
+  );
+  return hasDashboardModule ? "/dashboard" : "/staff";
+};
 const Login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -22,7 +36,17 @@ const Login = async (req, res) => {
       return res.status(400).json({ message: "Email must be under 100 characters" });
     }
 
-    const user = await User.findOne({ email }).populate({ path: "role", populate: { path: "permissions" } });
+    const user = await User.findOne({ email })
+      .populate({
+        path: "role",
+        populate: { path: "permissions" }
+      })
+      .populate({
+        path: "companyId",
+        populate: {
+          path: "subscription", 
+        }
+      });
     if (!user) {
       return res.status(400).json({ message: "User not fount" });
     }
@@ -33,7 +57,7 @@ const Login = async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user._id, role: user.role?._id,companyId: user.companyId, isSuperAdmin: user.isSuperAdmin },
+      { id: user._id, role: user.role?._id, companyId: user.companyId, isSuperAdmin: user.isSuperAdmin },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
@@ -45,6 +69,8 @@ const Login = async (req, res) => {
       path: "/",          // good practice
     });
 
+    const redirectTo = getRedirectPath(user);
+
     res.json({
       token,
       name: user.name,
@@ -54,7 +80,8 @@ const Login = async (req, res) => {
         id: user.role?._id,
         name: user.role?.name,
         permissions: user.role?.permissions
-      }
+      },
+      redirectTo
     });
 
   }
@@ -106,11 +133,11 @@ const logout = (req, res) => {
 //Show Login Data
 const getMe = async (req, res) => {
   if (!req.user || !req.user.id) {
-      return res.status(200).json({
-        id: null,
-        permissions: []
-      });
-    }
+    return res.status(200).json({
+      id: null,
+      permissions: []
+    });
+  }
   const user = await User.findById(req.user.id).populate("role", "name permissions");
   res.json({
     id: user._id,

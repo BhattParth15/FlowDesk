@@ -16,8 +16,11 @@
   --danger: #dc2626;
   --warning: #f59e0b;
 
-  --bg: #f8fafc;             /* Page Background */
-  --card-bg: #ffffff;
+  --bg: #0f172a;
+  --card-bg: #1e293b;
+}
+body {
+  background-color: var(--bg);
 }
 /* Backgrounds */
 .bg-primary { background-color: var(--primary); }

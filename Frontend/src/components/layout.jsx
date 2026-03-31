@@ -111,7 +111,7 @@ function Layout({ children }) {
 
                     <Navbar toggleSidebar={() => setIsOpen(!isOpen)} />
 
-                    <main className="flex-1 p-3 sm:p-6 lg:p-8 overflow-y-auto bg-gray-100">
+                    <main className="flex-1 p-3 sm:p-6 lg:p-8 overflow-y-auto bg-gray-100 dark:bg-gray-900">
                         <Outlet />
                     </main>
 

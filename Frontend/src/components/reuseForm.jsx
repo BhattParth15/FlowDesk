@@ -299,10 +299,21 @@ function ReuseForm({ title, fields, apiUrl, method = "post", onClose, onSuccess,
     const VIDEO_BASE = "https://res.cloudinary.com/djvwiudx2/video/upload/tasks/videos/";
 
     useEffect(() => {
-        axios.get(`${API_URL}/staff?page=1&limit=1000`, { withCredentials: true }).then(res => {
+        if (!selectedProject?._id) return;
+
+        if (hasPermission("staff.read")) {
+            fetchStaff();
+        }
+    }, [selectedProject, hasPermission]);
+    const fetchStaff = async () => {
+        try {
+            //const res = await axios.get(`${API_URL}/staff?page=1&limit=1000`, { withCredentials: true });
+            const res = await axios.get(`${API_URL}/staff/project?projectId=${selectedProject._id}&page=1&limit=1000`, { withCredentials: true })
             setStaff(res.data.staff);
-        });
-    }, []);
+        } catch (err) {
+            console.log(err.response?.data || err.message);
+        }
+    };
 
     useEffect(() => {
         if (initialData) {
@@ -391,14 +402,14 @@ function ReuseForm({ title, fields, apiUrl, method = "post", onClose, onSuccess,
                 ...m,
                 limit: Number(m.limit || 0)
             }));
-            
+
             const hasFileField = fields.some((field) => field.type === "image" || field.type === "video" || field.type === "file");
 
             if (!hasFileField) {
                 await axios({
                     url: apiUrl,
                     method: method,
-                    data: { ...Formdata, projectId: selectedProject?._id, assignedTo: selectedProject?.assignedUser?._id,modules: formattedModules },
+                    data: { ...Formdata, projectId: selectedProject?._id, assignedTo: selectedProject?.assignedUser?._id, modules: formattedModules },
                     withCredentials: true
                 });
             }
@@ -514,6 +525,7 @@ function ReuseForm({ title, fields, apiUrl, method = "post", onClose, onSuccess,
         }
     };
 
+    console.log("Staff", staff)
     const filteredStaff = staff.filter(s =>
         s.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -611,15 +623,32 @@ function ReuseForm({ title, fields, apiUrl, method = "post", onClose, onSuccess,
                                                      focus:ring-2 focus:ring-red-400 focus:outline-none transition-all"
                                     />
                                     {showDropdown && (
-                                        <div className="mention-dropdown">
-                                            {filteredStaff.map(user => (
-                                                <div
-                                                    key={user._id}
-                                                    onClick={() => insertMention(user)}
-                                                >
-                                                    {user.name}
-                                                </div>
-                                            ))}
+                                        <div className="absolute z-50 mt-1 w-64 max-h-60 overflow-y-auto rounded-md border border-gray-200 bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                                            {filteredStaff.length > 0 ? (
+                                                filteredStaff.map((user) => (
+                                                    <div
+                                                        key={user._id}
+                                                        className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 cursor-pointer hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                                                        onClick={() => insertMention(user)}
+                                                    >
+                                                        {/* Avatar Section */}
+                                                        <div className="h-8 w-8 flex-shrink-0 rounded-full bg-gray-200 overflow-hidden">
+                                                            {user.avatar ? (
+                                                                <img src={user.avatar} alt={user.name} className="h-full w-full object-cover" />
+                                                            ) : (
+                                                                <div className="flex h-full w-full items-center justify-center bg-blue-200 text-xs font-medium text-blue-600">
+                                                                    {user.name.charAt(0).toUpperCase()}
+                                                                </div>
+                                                            )}
+                                                        </div>
+
+                                                        {/* Name Section */}
+                                                        <span className="truncate font-medium">{user.name}</span>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <div className="px-4 py-2 text-sm text-gray-500">No staff found</div>
+                                            )}
                                         </div>
                                     )}
                                 </div>

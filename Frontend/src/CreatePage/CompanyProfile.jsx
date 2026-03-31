@@ -1,5 +1,6 @@
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
+import { AuthContext } from "../context/AuthContext";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -7,6 +8,7 @@ function CompanyProfile() {
     const [company, setCompany] = useState(null);
     const [plans, setPlans] = useState([]);
     const [activeTab, setActiveTab] = useState("PROFILE");
+    const { user } = useContext(AuthContext);
 
     const [timing, setTiming] = useState({
         openingTime: "",
@@ -21,6 +23,11 @@ function CompanyProfile() {
         fetchCompany();
         fetchPlans();
     }, []);
+    useEffect(() => {
+        if (user?.role?.name === "CompanyOwner") {
+            setActiveTab("SUBSCRIPTION");
+        }
+    }, [user]);
 
     useEffect(() => {
         if (company?.timing) {

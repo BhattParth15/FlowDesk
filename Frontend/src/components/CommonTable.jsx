@@ -15,7 +15,7 @@ function CommonTable({ columns, data, onEdit, onDelete, onView, actions, editPer
 
     return (
         <div className="bg-white rounded-lg shadow p-4 overflow-x-auto  relative">
-            <table className="hidden md:table w-full table-fixed">
+            <table className="hidden md:table w-full table-fixed ">
                 <thead className="bg-accent text-indigo-700 uppercase text-xs tracking-wider">
                     <tr>
                         {columns.map((col, index) => (

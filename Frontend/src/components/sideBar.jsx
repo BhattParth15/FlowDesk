@@ -1,10 +1,11 @@
 import { Link } from "react-router-dom";
-import { useState, useEffect,useContext } from "react";
+import { useState, useEffect, useContext } from "react";
 import logo from "../assets/logo.png";
 import { usePermission } from "../context/PermissionContext";
 import { useLocation } from "react-router-dom";
 import axios from "axios";
 import { useCompany } from "../context/companyContext";
+import { LayoutDashboard, Users,UsersRound, ShieldCheck,FolderOpen, Building2, CheckSquare, AlertCircle, FileText, KeyRound, Settings, CreditCard,Briefcase, ChevronRight, ChevronDown  } from 'lucide-react';
 import { AuthContext } from "../context/AuthContext";
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -18,7 +19,7 @@ function Sidebar({ closeSidebar }) {
     const { hasModule } = useCompany();
     const hasDashboard = hasModule("dashboard");
     const hasTeam = hasModule("team");
-    const { user} = useContext(AuthContext);
+    const { user } = useContext(AuthContext);
 
     useEffect(() => {
         if (isActive("/project") || isActive("/task") || isActive("/team") || isActive("/issue") || isActive("/taskstatus") || isActive("/document")) {
@@ -50,7 +51,11 @@ function Sidebar({ closeSidebar }) {
                             ? "bg-white/20 text-white shadow-md"
                             : "text-white/80 hover:bg-white/10 hover:text-white"} ${!hasDashboard && user?.isSuperAdmin === false ? "opacity-60 cursor-not-allowed" : ""}`}
                 >
-                    🏠Dashboard
+                    {/* 🏠Dashboard */}
+                    <div className="flex items-center gap-2">
+                        <LayoutDashboard size={20} strokeWidth={2} />
+                        <span>Dashboard</span>
+                    </div>
                 </Link>
                 {hasPermission("staff.read") && (
                     <Link
@@ -61,7 +66,11 @@ function Sidebar({ closeSidebar }) {
                                 ? "bg-white/20 text-white shadow-md"
                                 : "text-white/80 hover:bg-white/10 hover:text-white"}`}
                     >
-                        👤Manage Staff
+                        {/* 👤Manage Staff */}
+                        <div className="flex items-center gap-2">
+                            <Users size={20} strokeWidth={2} />
+                            <span>Manage Staff</span>
+                        </div>
                     </Link>
                 )}
 
@@ -75,7 +84,11 @@ function Sidebar({ closeSidebar }) {
                                 ? "bg-white/20 text-white shadow-md"
                                 : "text-white/80 hover:bg-white/10 hover:text-white"}`}
                     >
-                        🔑Manage Role
+                        {/* 🔑Manage Role */}
+                        <div className="flex items-center gap-2">
+                            <KeyRound size={20} strokeWidth={2} />
+                            <span>Manage Role</span>
+                        </div>
                     </Link>
                 )}
                 {hasPermission("company.read") && user?.isSuperAdmin === true && (
@@ -87,14 +100,23 @@ function Sidebar({ closeSidebar }) {
                                 ? "bg-white/20 text-white shadow-md"
                                 : "text-white/80 hover:bg-white/10 hover:text-white"}`}
                     >
-                        🏭Companies
+                        {/* 🏭Companies */}
+                        <div className="flex items-center gap-2">
+                            <Building2 size={20} strokeWidth={2} />
+                            <span>Companies</span>
+                        </div>
                     </Link>
                 )}
                 <div
                     onClick={() => setOpenProjects(!openProject)}
                     className={`block mx-3 mt-2 py-2 text-white rounded-r-full transition-all duration-200 hover:bg-white/10 font-sans text-sm `}
                 >
-                    👨🏼‍💻Project
+                    {/* 👨🏼‍💻Project */}
+                    <div className="flex items-center gap-2">
+                        <FolderOpen size={20} strokeWidth={2} />
+                        <span className="mr-10">Project</span>
+                        {openProject ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                    </div>
                 </div>
                 {openProject && (
                     <div className="ml-6 space-y-1">
@@ -108,7 +130,11 @@ function Sidebar({ closeSidebar }) {
                                         ? "bg-white/20 text-white shadow-md"
                                         : "text-white/80 hover:bg-white/10 hover:text-white"}`}
                             >
-                                📝Manage Task
+                                {/* 📝Manage Task */}
+                                <div className="flex items-center gap-2">
+                                    <CheckSquare size={20} strokeWidth={2} />
+                                    <span>Manage Task</span>
+                                </div>
                             </Link>
                         )}
                         {hasPermission("project.read") && (
@@ -120,7 +146,11 @@ function Sidebar({ closeSidebar }) {
                                         ? "bg-white/20 text-white shadow-md"
                                         : "text-white/80 hover:bg-white/10 hover:text-white"}`}
                             >
-                                👨🏼‍💻Manage Project
+                                {/* 👨🏼‍💻Manage Project */}
+                                <div className="flex items-center gap-2">
+                                    <Briefcase size={20} strokeWidth={2} />
+                                    <span>Manage Project</span>
+                                </div>
                             </Link>
                         )}
                         {hasPermission("team.read") && (
@@ -132,7 +162,11 @@ function Sidebar({ closeSidebar }) {
                                         ? "bg-white/20 text-white shadow-md"
                                         : "text-white/80 hover:bg-white/10 hover:text-white"}${!hasTeam && user?.isSuperAdmin === false ? "opacity-50 cursor-not-allowed" : ""}`}
                             >
-                                👥Team
+                                {/* 👥Team */}
+                                <div className="flex items-center gap-2">
+                                    <UsersRound size={20} strokeWidth={2} />
+                                    <span>Team</span>
+                                </div>
                             </Link>
                         )}
                         {hasPermission("issue.read") && (
@@ -144,7 +178,11 @@ function Sidebar({ closeSidebar }) {
                                         ? "bg-white/20 text-white shadow-md"
                                         : "text-white/80 hover:bg-white/10 hover:text-white"}`}
                             >
-                                ⚠️Issue
+                                {/* ⚠️Issue */}
+                                <div className="flex items-center gap-2">
+                                    <AlertCircle size={20} strokeWidth={2} />
+                                    <span>Issue</span>
+                                </div>
                             </Link>
                         )}
                         {hasPermission("taskstatus.read") && (
@@ -156,7 +194,11 @@ function Sidebar({ closeSidebar }) {
                                         ? "bg-white/20 text-white shadow-md"
                                         : "text-white/80 hover:bg-white/10 hover:text-white"}`}
                             >
-                                📊Task Status
+                                {/* 📊Task Status */}
+                                <div className="flex items-center gap-2">
+                                    <LayoutDashboard size={20} strokeWidth={2} />
+                                    <span>Task Status</span>
+                                </div>
                             </Link>
                         )}
                         {hasPermission("document.read") && (
@@ -168,19 +210,28 @@ function Sidebar({ closeSidebar }) {
                                         ? "bg-white/20 text-white shadow-md"
                                         : "text-white/80 hover:bg-white/10 hover:text-white"}`}
                             >
-                                🗂️Document
+                                {/* 🗂️Document */}
+                                <div className="flex items-center gap-2">
+                                    <FileText size={20} strokeWidth={2} />
+                                    <span>Document</span>
+                                </div>
                             </Link>
                         )}
 
                     </div>
                 )}
                 {/* Settings Toggle */}
-                {hasPermission("permission.read") && user?.isSuperAdmin === true &&(
+                {hasPermission("permission.read") && user?.isSuperAdmin === true && (
                     <div
                         onClick={() => setOpenSettings(!openSettings)}
                         className={`block mx-3 mt-2 py-2 text-white rounded-r-full transition-all duration-200 hover:bg-white/10 font-sans text-sm `}
                     >
-                        ⚙Settings
+                        {/* ⚙Settings */}
+                        <div className="flex items-center gap-2">
+                            <Settings size={20} strokeWidth={2} />
+                            <span className="mr-10">Settings</span>
+                            {openSettings ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                        </div>
                     </div>
                 )}
 
@@ -196,7 +247,11 @@ function Sidebar({ closeSidebar }) {
                                         ? "bg-white/20 text-white shadow-md"
                                         : "text-white/80 hover:bg-white/10 hover:text-white"}`}
                             >
-                                🛡️Permission
+                                {/* 🛡️Permission */}
+                                <div className="flex items-center gap-2">
+                                    <ShieldCheck size={20} strokeWidth={2} />
+                                    <span>Permission</span>
+                                </div>
                             </Link>
                         )}
                         {hasPermission("subcription.read") && (
@@ -208,7 +263,11 @@ function Sidebar({ closeSidebar }) {
                                         ? "bg-white/20 text-white shadow-md"
                                         : "text-white/80 hover:bg-white/10 hover:text-white"}`}
                             >
-                                💵Subcription
+                                {/* 💵Subcription */}
+                                <div className="flex items-center gap-2">
+                                    <CreditCard size={20} strokeWidth={2} />
+                                    <span>Subscription</span>
+                                </div>
                             </Link>
                         )}
                     </div>

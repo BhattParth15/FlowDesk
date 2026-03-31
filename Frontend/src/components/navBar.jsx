@@ -27,6 +27,7 @@ function Navbar({ toggleSidebar }) {
   const { selectedCompany, setSelectedCompany } = useCompany();
   const { hasPermission } = usePermission();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
     if (hasPermission("project.read")) {
@@ -64,6 +65,14 @@ function Navbar({ toggleSidebar }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
 
 
+  }, []);
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme");
+
+    if (savedTheme === "dark") {
+      document.documentElement.classList.add("dark");
+      setDarkMode(true);
+    }
   }, []);
 
   const fetchProject = async () => {
@@ -130,9 +139,22 @@ function Navbar({ toggleSidebar }) {
     setSelectedCompany(com);
     localStorage.setItem("selectedCompany", JSON.stringify(com));
   };
+  const toggleDarkMode = () => {
+    const html = document.documentElement;
+
+    if (darkMode) {
+      html.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    } else {
+      html.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    }
+
+    setDarkMode(!darkMode);
+  };
 
   return (
-    <header className="w-full h-20 sm:h-15 bg-white flex items-center justify-between px-4 mr-6 md:px-6 text-black z-500 lg:ml-4">
+    <header className="w-full h-20 sm:h-15 bg-white flex items-center justify-between px-4 mr-6 md:px-6 text-black z-500 lg:ml-4 dark:bg-gray-900 text-black dark:text-white">
       <div className="flex items-center gap-3">
 
         {/* Hamburger Button - Mobile Only */}
@@ -158,7 +180,7 @@ function Navbar({ toggleSidebar }) {
         <select
           value={selectedProject?._id || "all"}
           onChange={(e) => handleProjectChange(e.target.value)}
-          className="border px-3 py-1 rounded-md"
+          className="border px-3 py-1 rounded-md dark:bg-gray-800 text-gray-800 dark:text-white"
         >
           <option value="all">All</option>
           {projects.map(project => (
@@ -171,7 +193,7 @@ function Navbar({ toggleSidebar }) {
           <select
             value={selectedCompany?._id || "all"}
             onChange={(e) => handleCompanyChange(e.target.value)}
-            className="border px-3 py-1 rounded-md"
+            className="border px-3 py-1 rounded-md dark:bg-gray-800 text-gray-800 dark:text-white"
           >
             <option value="all">All</option>
             {company.map(com => (
@@ -182,7 +204,14 @@ function Navbar({ toggleSidebar }) {
           </select>
         )}
       </div>
-
+      <div className="hidden md:flex items-center gap-2 ml-auto">
+        <button
+          onClick={toggleDarkMode}
+          className="px-3 py-1 border rounded-md"
+        >
+          {darkMode ? "🌙 Dark" : "☀️ Light"}
+        </button>
+      </div>
       <div className="flex items-center gap-5">
         {/* Icons from screenshot: Search, Grid, etc (Optional placeholders) */}
         <div className="relative p-4" ref={dropdownRef}>
@@ -200,7 +229,7 @@ function Navbar({ toggleSidebar }) {
           </div>
           <div className="relative">
             {open && (
-              <div className="absolute right-0  w-48 bg-white text-gray-800 rounded-lg shadow-xl border border-gray-100 py-2">
+              <div className="absolute right-0  w-48 bg-white text-gray-800 rounded-lg shadow-xl border border-gray-100 py-2 dark:bg-gray-800 text-gray-800 dark:text-white">
                 <div
                   onClick={() => { navigate("/profile"); setOpen(false); }}
                   className="px-4 py-2 hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors"

@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { AuthContext } from "../context/AuthContext.jsx";
 import { useContext } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { Eye, EyeOff, Lock } from "lucide-react";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -65,9 +66,10 @@ function SuperAdminLogin() {
                 withCredentials: true
             });
             login(res.data);
+            const redirectPath = res.data.redirectTo;
             showMessage("Login Successful...", "success");
             setTimeout(() => {
-                window.location.href = redirect;
+                window.location.href = redirectPath;
             }, 2000);
         }
         catch (error) {
@@ -118,7 +120,8 @@ function SuperAdminLogin() {
                             onClick={() => setShowPassword(!showPassword)}
                             className="absolute inset-y-0 right-3 flex items-center pr-4 text-gray-500 hover:text-gray-700"
                         >
-                            {showPassword ? "🔒" : "👁"}
+                            {/* {showPassword ? "🔒" : "👁"} */}
+                            {showPassword ? <Eye size={23} /> : <EyeOff size={23} />}
                         </button>
 
                     </div>
